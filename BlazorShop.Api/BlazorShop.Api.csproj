@@ -15,4 +15,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BlazorShop.Models\BlazorShop.Models.csproj" />
+  </ItemGroup>
+
 </Project>
