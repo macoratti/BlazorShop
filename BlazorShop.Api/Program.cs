@@ -1,6 +1,7 @@
 using BlazorShop.Api.Context;
 using BlazorShop.Api.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddCors();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -27,6 +29,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors(policy =>
+    policy.WithOrigins("http://localhost:7023", "https://localhost:7023")
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .WithHeaders(HeaderNames.ContentType)
+);
 
 app.UseHttpsRedirection();
 
