@@ -1,0 +1,59 @@
+﻿@page "/ProdutoDetalhes/{Id:int}"
+
+
+@if (Produto is null && MensagemErro is null)
+{
+    <ExibirSpinner />
+}
+else if (MensagemErro is not null)
+{
+    <ExibirErro MensagemErro="@MensagemErro"></ExibirErro>
+}
+else
+{
+    <h3 class="mb-5">Detalhes do Produto</h3>
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <img class="img-fluid" src="@Produto.ImagemUrl">
+        </div>
+        <div class="col-md-6">
+            <h3>@Produto.Nome</h3>
+            <p class="mb-4">@Produto.Descricao</p>
+            <p class="mb-4">
+                <b>
+                    @Produto.Preco.ToString("C")&nbsp;(@Produto.Quantidade items em estoque)
+                </b>
+            </p>
+            <div>
+                <button class="btn btn-success">
+                    Incluir no Carrinho
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject]
+    public IProdutoService? ProdutoService { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    public ProdutoDto? Produto { get; set; }
+
+    public string? MensagemErro { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Produto = await ProdutoService.GetItem(Id);
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = ex.Message;
+        }
+    }
+
+}
