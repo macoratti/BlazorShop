@@ -81,7 +81,7 @@ public class CarrinhoCompraController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<CarrinhoItemDto>> PostItem([FromBody] 
+    public async Task<ActionResult<CarrinhoItemDto>> PostItem([FromBody]
     CarrinhoItemAdicionaDto carrinhoItemAdicionaDto)
     {
         try
@@ -109,6 +109,33 @@ public class CarrinhoCompraController : ControllerBase
         catch (Exception ex)
         {
             logger.LogError("## Erro criar um novo item no carrinho");
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult<CarrinhoItemDto>> DeleteItem(int id)
+    {
+        try
+        {
+            var carrinhoItem = await carrinhoCompraRepo.DeletaItem(id);
+
+            if (carrinhoItem == null)
+            {
+                return NotFound();
+            }
+
+            var produto = await produtoRepo.GetItem(carrinhoItem.ProdutoId);
+
+            if (produto is null)
+                return NotFound();
+
+            var carrinhoItemDto = carrinhoItem.ConverterCarrinhoItemParaDto(produto);
+            return Ok(carrinhoItemDto);
+
+        }
+        catch (Exception ex)
+        {
             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
         }
     }
