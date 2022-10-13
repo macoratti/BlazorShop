@@ -1,4 +1,5 @@
 ﻿@page "/CarrinhoCompra"
+@inject IJSRuntime Js;
 
 @if (CarrinhoCompraItens == null && MensagemErro == null)
 {
@@ -26,13 +27,16 @@ else
                             <div class="mb-4">
                                 @item.ProdutoDescricao
                             </div>
-                            <span>Preço: <b>@item.Preco.ToString("C")</b></span>
-                            <div>
-                                <button @onclick = "(()=> DeletaCarrinhoItem_Click(item.Id))"
-                                    class="btn btn-danger sm">
-                                    <span class="oi oi-trash"></span>
-                                    </button>
-                            </div>
+                            <span>Preço: <b>@item.Preco.ToString("C")</b>
+                                <input @oninput="()=>AtualizaQuantidade_Input(item.Id)" type="number" @bind="@item.Quantidade" />
+                                <button data-itemId="@item.Id"  class="btn btn-info btn-sm atualizaquantidade" @onclick="(()=> AtualizaQuantidadeCarrinhoItem_Click(item.Id, item.Quantidade))">
+                               <i class="oi oi-check"></i>
+                            </button>
+                            <br>
+                            <button @onclick = "(()=> DeletaCarrinhoItem_Click(item.Id))" class="btn btn-danger sm">
+                                <span class="oi oi-trash"></span>
+                             </button>
+                            </span>
                         </div>
                     </div>
                 }
@@ -40,7 +44,7 @@ else
             <div class="col-md-3">
                 <h5>Carrinho - Resumo</h5>
                 <div class="mt-2">
-                    <div>Total - </div>
+                    <div>Total - (@QuantidadeTotal items)&nbsp;<br /><b>@PrecoTotal</b></div>
                     <a href="#" class="btn btn-success">
                         <span class="oi oi-credit-card"></span>&nbsp; Fechar Pedido
                     </a>
@@ -64,12 +68,18 @@ else
 
     public string? MensagemErro { get; set; }
 
+    protected string? PrecoTotal { get; set; }
+    protected int QuantidadeTotal { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             CarrinhoCompraItens = await CarrinhoCompraService
                                        .GetItens(UsuarioLogado.UsuarioId);
+
+            //CalculaResumoCarrinhoTotal();
+            CarrinhoChanged();
         }
         catch (Exception ex)
         {
@@ -84,6 +94,9 @@ else
 
         //remoção do item da coleção de objetos da memoria no cliente
         await RemoveCarrinhoItem(id);
+
+        //CalculaResumoCarrinhoTotal();
+        CarrinhoChanged();
     }
 
     private CarrinhoItemDto GetCarrinhoItem(int id)
@@ -95,5 +108,76 @@ else
     {
         var carrinhoItemDto = GetCarrinhoItem(id);
         CarrinhoCompraItens.Remove(carrinhoItemDto);
+    }
+
+    protected async Task AtualizaQuantidadeCarrinhoItem_Click(int id, int quantidade)
+    {
+        try
+        {
+            if (quantidade > 0)
+            {
+                var atualizaItemDto = new CarrinhoItemAtualizaQuantidadeDto
+                {
+                    CarrinhoItemId = id,
+                    Quantidade = quantidade
+                };
+
+                var retornaItemAtualizadoDto = await CarrinhoCompraService
+                                                     .AtualizaQuantidade(atualizaItemDto);
+
+                AtualizaPrecoTotalItem(retornaItemAtualizadoDto);
+                //CalculaResumoCarrinhoTotal();
+                CarrinhoChanged();
+                await Js.InvokeVoidAsync("TornaBotaoAtualizarQuantidadeVisivel", id, false);
+            }
+            else
+            {
+                var item = CarrinhoCompraItens.FirstOrDefault(i => i.Id == id);
+                if (item is not null)
+                {
+                    item.Quantidade = 1;
+                    item.PrecoTotal = item.Preco;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+    private void SetPrecoTotal()
+    {
+        PrecoTotal = CarrinhoCompraItens.Sum(p => p.PrecoTotal).ToString("C");
+    }
+    private void SetQuantidadeTotal()
+    {
+        QuantidadeTotal = CarrinhoCompraItens.Sum(p => p.Quantidade);
+    }
+
+    private void CalculaResumoCarrinhoTotal()
+    {
+        SetPrecoTotal();
+        SetQuantidadeTotal();
+    }
+
+    private void AtualizaPrecoTotalItem(CarrinhoItemDto carrinhoItemDto)
+    {
+        var item = GetCarrinhoItem(carrinhoItemDto.Id);
+
+        if (item != null)
+        {
+            item.PrecoTotal = carrinhoItemDto.Preco * carrinhoItemDto.Quantidade;
+        }
+    }
+
+    protected async Task AtualizaQuantidade_Input(int id)
+    {
+        await Js.InvokeVoidAsync("TornaBotaoAtualizarQuantidadeVisivel", id, true);
+    }
+
+    private void CarrinhoChanged()
+    {
+        CalculaResumoCarrinhoTotal();
+        CarrinhoCompraService.RaiseEventOnCarrinhoCompraChanged(QuantidadeTotal);
     }
 }
