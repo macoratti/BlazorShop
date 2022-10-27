@@ -36,7 +36,7 @@ public class ProdutosController : ControllerBase
         catch (Exception)
         {
             return StatusCode(StatusCodes.Status500InternalServerError,
-                "Erro ao acessar a base de dados");           
+                "Erro ao acessar a base de dados");
         }
     }
 
@@ -64,8 +64,8 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpGet]
-    [Route("GetItensPorCategoria/{categoriaId}")]
-    public async Task<ActionResult<IEnumerable<ProdutoDto>>> 
+    [Route("{categoriaId}/GetItensPorCategoria")]
+    public async Task<ActionResult<IEnumerable<ProdutoDto>>>
         GetItensPorCategoria(int categoriaId)
     {
         try
@@ -78,6 +78,23 @@ public class ProdutosController : ControllerBase
         {
             return StatusCode(StatusCodes.Status500InternalServerError,
                             "Erro ao acessar o banco de dados");
+        }
+    }
+
+    [HttpGet]
+    [Route("GetCategorias")]
+    public async Task<ActionResult<IEnumerable<CategoriaDto>>> GetCategorias()
+    {
+        try
+        {
+            var categorias = await _produtoRepository.GetCategorias();
+            var categoriasDto = categorias.ConverterCategoriasParaDto();
+            return Ok(categoriasDto);
+        }
+        catch (Exception)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                                       "Erro ao acessar o banco de dados");
         }
     }
 }

@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using BlazorShop.Web;
 using BlazorShop.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -14,5 +15,13 @@ builder.Services.AddScoped(sp => new HttpClient
 });
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddScoped<ICarrinhoCompraService, CarrinhoCompraService>();
+
+builder.Services.AddBlazoredLocalStorage();
+
+builder.Services.AddScoped<IGerenciaProdutosLocalStorageService,
+    GerenciaProdutosLocalStorageService>();
+
+builder.Services.AddScoped<IGerenciaCarrinhoItensLocalStorageService,
+    GerenciaCarrinhoItensLocalStorageService>();
 
 await builder.Build().RunAsync();
